@@ -66,17 +66,17 @@
 #     print(f"A temperatura em Fahreheit é de {r}.")
 
     # função de saudação baseada no horário
-def saudacao_horario(nome, hora):
-    if 5<= hora < 12: 
-        return (f"Boa tarde, {nome}!")
-    elif 12<= hora < 18:
-        return (f"Boa noite, {nome}!")
-    else: 
-        return ("Horário inválido.")
+# def saudacao_horario(nome, hora):
+#     if 5<= hora < 12: 
+#         return (f"Boa tarde, {nome}!")
+#     elif 12<= hora < 18:
+#         return (f"Boa noite, {nome}!")
+#     else: 
+#         return ("Horário inválido.")
 
-nome = input("Digite o seu nome: ")
-hora = int(input("Digite apenas a hora: "))
-msg = ({saudacao_horario}, {nome})
+# nome = input("Digite o seu nome: ")
+# hora = int(input("Digite apenas a hora: "))
+# msg = ({saudacao_horario}, {nome})
 
-if __name__ == '__main__': 
-    print(f"{msg}")
+# if __name__ == '__main__': 
+    # print(f"{msg}")      está com erro. continuar
