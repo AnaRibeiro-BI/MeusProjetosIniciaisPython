@@ -62,11 +62,41 @@ class veiculo:
         self.marca = marca
         self.velocidade = velocidade
 
-def mover(self):
-    return f"Veículo {self.marca} se movendo"
+    def mover(self):
+        return f"Veículo {self.marca} se movendo"
 
-class Carro(veiculo):
-     def __init__(self, marca, velocidade, função):
+class carro(veiculo):
+    def __init__(self, marca, velocidade, movimento, forma):
         super().__init__(marca, velocidade)
-        
+        self.movimento = movimento  
+        self.forma = forma          
+
+    def mover(self):
+        return f"carro {self.movimento} liga o motor"
+
+    def exibir_dados(self):
+        return (f"O carro de marca {self.marca}, com velocidade {self.velocidade}, {self.movimento}, e se move {self.forma}")
+
+class bicicleta(veiculo):
+    def __init__(self, marca, velocidade, movimento, forma):
+        super().__init__(marca, velocidade)
+        self.movimento = movimento
+        self.forma = forma
     
+    def mover(self):
+        return f"bicileta {self.movimento} sobe na bike"
+    
+    def exibir_dados(self):
+        return (f"A bicileta de marca {self.marca}, com velocidade {self.velocidade}, {self.movimento}, e se move {self.forma}")
+
+# Teste das classes
+car = carro("Toyota", 120, "liga o motor", "acelerando")
+print(car.exibir_dados())
+print("-")
+bike = bicicleta("Caloi", 25, "sobe na bike", "pedalando")
+print(bike.exibir_dados())
+
+# Polimorfismo em ação
+veiculos = [car, bike]
+for i in veiculos:
+    print(f"{i.mover()}")
