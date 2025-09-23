@@ -7,4 +7,14 @@ openpyxl==3.1.5
 scikit-learn==1.5.2
 sqlalchemy==2.0.34
 pyarrow==17.0.0
+pandas
+numpy
+matplotlib
+jupyter
+seaborn
+openpyxl
+scikit-learn
+sqlalchemy
+pyarrow
+# Comando para instalar as dependências após a criação do container
 "postCreateCommand": "pip install -r requirements.txt"

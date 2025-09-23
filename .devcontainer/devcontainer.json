@@ -25,7 +25,7 @@
 }
 {
   "name": "Python BI Dev",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bullseye",
 
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {}
@@ -58,7 +58,7 @@
     }
   },
 
-  "postCreateCommand": "pip install pandas numpy matplotlib seaborn jupyter openpyxl",
+  "postCreateCommand": "pip install -r requirements.txt"
   
   "remoteUser": "vscode"
 }
