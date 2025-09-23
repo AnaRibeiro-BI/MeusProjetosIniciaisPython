@@ -1,0 +1,10 @@
+pandas==2.2.2
+numpy==1.26.4
+matplotlib==3.9.2
+seaborn==0.13.2
+jupyter==1.0.0
+openpyxl==3.1.5
+scikit-learn==1.5.2
+sqlalchemy==2.0.34
+pyarrow==17.0.0
+"postCreateCommand": "pip install -r requirements.txt"
