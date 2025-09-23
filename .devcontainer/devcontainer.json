@@ -23,3 +23,42 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }
+{
+  "name": "Python BI Dev",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "mtxr.sqltools",
+        "qwtel.sqlite-viewer",
+        "grapecity.gc-excelviewer",
+        "yzhang.markdown-all-in-one",
+        "github.copilot",
+        "esbenp.prettier-vscode",
+        "streetsidesoftware.code-spell-checker",
+        "gruntfuggly.todo-tree"
+      ],
+      "settings": {
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        }
+      }
+    }
+  },
+
+  "postCreateCommand": "pip install pandas numpy matplotlib seaborn jupyter openpyxl",
+  
+  "remoteUser": "vscode"
+}
