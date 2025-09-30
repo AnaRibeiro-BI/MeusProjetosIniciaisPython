@@ -96,11 +96,11 @@ pedidos = [
     (2, 'Calça', 49.99, '2023-10-02'),
     (3, 'Tênis', 89.99, '2023-10-03'),
     (4, 'Lápis', 5.88, '2023-10-04'),
-    (5, 'Meia', 12.99, '2023-10-05'),
-    (6, 'Caderno', 10.00, '2023-10-06')
+    (5, 'Meia', 12.99, '2023-10-05')
+    # Removido o pedido com cliente_id 6, pois não existe esse cliente
 ]
 cursor.executemany("INSERT OR IGNORE INTO clientes (nome, email, telefone) VALUES (?, ?, ?)", clientes) 
-#ao invés de inserir na tabela de clientes, insere ou ignora caso o email já exista
+    #ao invés de inserir na tabela de clientes, insere ou ignora caso o email já exista
 cursor.executemany("INSERT INTO pedidos (cliente_id, produto, valor, data) VALUES (?, ?, ?, ?)", pedidos)
 conexao.commit() # Salvando as alterações no banco de dados
 
