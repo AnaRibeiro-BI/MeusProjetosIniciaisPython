@@ -25,13 +25,17 @@ if opcao == "1":
 
 elif opcao == "2":
     nome = input("Digite o nome produto que deseja buscar: ")
-    resultados = buscar_produto(conection(), nome)
+    resultados = buscar_produto(conection(), nome) # resultados recebe a lista de produtos encontrados
+    # busca o produto pelo nome fazendo conecção com o banco de dados (connection()) e passando o nome do produto a ser buscado
     if resultados:
         for r in resultados: # r para cada resultao encontrado
-                    print(r)
+                    print(r) # imprime o resultado
 
 elif opcao 3 == "3": 
     produtos = listar_produtos(conection())
+    if produtos:
+        for produto in produtos:
+            print(produto) 
 
 
 
