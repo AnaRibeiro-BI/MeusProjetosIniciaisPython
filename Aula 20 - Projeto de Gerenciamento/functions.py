@@ -4,10 +4,11 @@ from datetime import datetime # Importa datetime para manipulação de datas e h
 from typing import List, Optional # Importa List e Optional para tipagem de listas e valores opcionais (sugestão IA)
 
 class Produto:
-     def __init__(self, id, nome: str, valor: float):
+     def __init__(self, id, nome: str, categoria: str, valor: float):
         self.id = id
         self.nome = nome
         self.valor = valor
+        self.categoria = categoria 
 
 class Item: 
     def __init__(self, id_item: int, id_produto: int, quantidade: int, id_pedido: int):
@@ -26,9 +27,9 @@ class Pedido:
         self.itens: List[Item] = []
         self.status = "Aberto", "Fechado", "Cancelado" # Aberto, Fechado, Cancelado
 
-class Pedido(Produto): # Herda de Produto id, nome e valor
+class Pedido(Produto): # Herda de Produto id, nome, valor e categoria
      def __init__(self, id: int, produto, quantidade, valor_unitario):
-        super().__init__(produto.id, produto.nome, produto.valor) # Chama o construtor da classe Produto
+        super().__init__(produto.id, produto.nome, produto.valor, produto.categoria) # Chama o construtor da classe Produto
         # abaixo define os atributos específicos da classe Pedido
         self.id = id 
         self.quantidade = quantidade
@@ -49,11 +50,11 @@ class Mesa:
 
 # Funções para manipulação dos dados no banco de dados SQLite para o Sistema de Gerenciamntento do Restaurante
 
-def cadastrar_produto(id, nome, valor): #cria função para cadastrar ID, Nome e Valor do produto
+def cadastrar_produto(id, nome, valor, categoria): #cria função para cadastrar ID, Nome e Valor do produto
     from bd import conexao # Importa a conexão do banco de dados
     cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
         # Insere o produto, nome e valor na tabela
-    cursor.execute("INSERT INTO produtos (id, nome, valor) VALUES (?, ?, ?)", (id, nome, valor)) 
+    cursor.execute("INSERT INTO produtos (id: AUTO_INCREMENT, nome, valor, categoria) VALUES (?, ?, ?, ?)", (id, nome, valor, categoria)) 
     conexao.commit() # Salva as alterações no banco de dados
     print(f"Produto '{nome}' cadastrado com sucesso!")
     return True
@@ -87,7 +88,7 @@ def realizar_pedido(id_atendente, id_mesa, itens: list): #cria função para rea
                    (id_atendente, id_mesa, datetime.now(), "Aberto")) # Insere o pedido na tabela
     id_pedido = cursor.lastrowid # Obtém o ID do pedido recém-criado
     for item in itens: # Para cada item no pedido
-        cursor.execute("INSERT INTO itens (id_pedido, id_produto, quantidade) VALUES (?, ?, ?)", 
+        cursor.execute("INSERT INTO itens (id_pedido: AUTO_INCREMENT, id_produto, quantidade) VALUES (?, ?, ?)", 
                        (id_pedido, item.id_produto, item.quantidade)) # Insere o item na tabela
     conexao.commit() # Salva as alterações no banco de dados
     print(f"🚀 Pedido realizado com sucesso! ID do Pedido: {id_pedido}")
@@ -101,20 +102,23 @@ def atualizar_produto(nome, novo_nome, novo_valor): #cria função para atualiza
     print(f"Produto '{nome}' atualizado com sucesso para '{novo_nome}' com valor '{novo_valor}'!")
     return True
 
-def listar_itens_pedido(id_pedido): #cria função para listar todos os itens de um pedido o id_pedido é o identificador único do pedido
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    # i é abreviação para item e p para produto
-    # A consulta SQL abaixo seleciona os itens do pedido junto com o valor unitário do produto e calcula o valor total do item (quantidade * valor unitário)
+def listar_itens_pedido(conexao, id_pedido): #cria função para listar itens do pedido pelo id_pedido
+    cursor = conexao.cursor()
     cursor.execute("""
-        SELECT i.ID_Item, i.ID_Produto, i.Quantidade_item, p.Valor_unitario_produto,
-               (i.Quantidade_item * p.Valor_unitario_produto) AS Valor_total_item
-        FROM Item i 
-        JOIN Produtos p ON i.ID_Produto = p.ID_produtos
-        WHERE i.ID_Pedido = ?
-    """, (id_pedido,)) # Seleciona todos os itens do pedido com o valor total calculado
+        SELECT 
+            i.id_item,
+            p.nome_produto,
+            i.quantidade_item,
+            p.valor_unitario_produto,
+            (i.quantidade_item * p.valor_unitario_produto) AS valor_total_item
+        FROM itens_pedido i
+        JOIN produtos p ON i.id_produto = p.id_produto
+        WHERE i.id_pedido = ?
+    """, (id_pedido,))
+    # chama o id do item, nome do produto, quantidade do item, valor unitário do produto e calcula o valor total do item (quantidade * valor unitário)
     resultados = cursor.fetchall() # Obtém todos os resultados da consulta
-    return resultados # Retorna a lista de itens do pedido encontrados
+    cursor.close()
+    return resultados
 
  # calcula o subtotal do item do pedido 
 def calcular_subtotal(self, valor_unitario: float) -> float: # o -> float indica o tipo de retorno da função
@@ -247,7 +251,31 @@ def calcular_total_pedido() -> float:
     return total_dia
 
 def gerar_relatorio_vendas():
-   from datetime import datetime
+    # Gera um relatório simples de vendas do dia atual, incluindo total de pedidos e valor total vendido
+    from bd import conexao
+    cursor = conexao.cursor()
+    from datetime import datetime # Importa datetime para manipulação de datas 
+    hoje = datetime.now().date()
+    # Total de pedidos e valor total vendido
+    cursor.execute("""
+        SELECT COUNT(*) AS total_pedidos,
+               SUM(i.quantidade * p.valor) AS valor_total_vendido
+        FROM pedidos ped
+        JOIN itens i ON ped.id = i.id_pedido
+        JOIN produtos p ON i.id_produto = p.id
+        WHERE DATE(ped.data_pedido) = ?;
+    """, (hoje,))
+    total_pedidos, valor_total_vendido = cursor.fetchone() or (0, 0.0) # Se não houver pedidos, retorna 0 e 0.0
+
+    # Exibição do relatório
+    print(f"\n -----📊 Relatório de Vendas - {hoje} -----")
+    print(f"Total de pedidos: {total_pedidos}")
+    print(f"Valor total vendido: R${valor_total_vendido:.2f}")
+    print("-" * 30)
+    return {
+        "total_pedidos": total_pedidos,
+        "valor_total_vendido": valor_total_vendido
+    }
 
 def relatorio_vendas_detalhado():
 # Gera um relatório de vendas do dia atual, incluindo:
