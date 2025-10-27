@@ -7,7 +7,7 @@ class Produto:
         self.nome = nome
         self.valor = valor
 
-    def __str__(self): 
+    def __str__(self): # define como um objeto deve ser representado como uma string legível por humanos
         return f"ID: {self.id} | {self.nome} | R$ {self.valor:.2f}"
 
 class Atendente:
