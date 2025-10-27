@@ -1,5 +1,4 @@
 import sqlite3
-from datetime import datetime  # Importa datetime para manipulação de datas e horas no pedido
 
 def criar_conexao():
     # Cria e retorna uma conexão com o banco de dados
@@ -10,12 +9,11 @@ def criar_conexao():
         print(f"🚫 Erro ao conectar com o banco: {erro}")
         return None
 
-def criar_tabelas():
-    """Cria todas as tabelas necessárias"""
+def criar_tabelas(): # cria todas as tabelas necessárias
     conexao = criar_conexao()
     if not conexao:
         return False
-    
+
     cursor = conexao.cursor()
         # Criação das tabelas, caso ainda não existam
     
@@ -59,3 +57,6 @@ def criar_tabelas():
     conexao.commit()
     print("✅ Banco de dados e tabelas verificados/criados com sucesso!")
     return conexao
+
+conexao = sqlite3.connect("restaurante.db")
+conexao.close()  # fechar a conexao com o banco

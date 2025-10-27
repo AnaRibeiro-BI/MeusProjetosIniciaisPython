@@ -69,7 +69,7 @@ def calcular_total(self):
 def __str__(self):
     return f"Pedido {self.id} | Mesa {self.numero_mesa} | Status: {self.status} | Total: R$ {self.valor_total:.2f}"
 
-class Pedido(Produto): # Herda de Produto id, nome, valor e categoria
+class ItemPedidoHerdado(Produto): # Herda de Produto id, nome, valor e categoria
      def __init__(self, id=None, produto="", quantidade=0, valor_unitario=0.0):
         super().__init__(produto.id, produto.nome, produto.valor, produto.categoria) # Chama o construtor da classe Produto
         # abaixo define os atributos específicos da classe Pedido
