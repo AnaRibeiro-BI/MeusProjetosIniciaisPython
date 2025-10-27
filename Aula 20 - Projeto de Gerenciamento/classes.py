@@ -7,7 +7,7 @@ class Produto:
         self.nome = nome
         self.valor = valor
 
-    def __str__(self): # define como um objeto deve ser representado como uma string legível por humanos
+    def __str__(self): # Retorna uma string formatada com as informações do objeto, facilitando a leitura do que foi inputado
         return f"ID: {self.id} | {self.nome} | R$ {self.valor:.2f}"
 
 class Atendente:
@@ -22,6 +22,8 @@ class Atendente:
 
 class Mesa:
     def __init__(self, numero=0, capacidade=0, ocupada=False):
+# O =0 no parâmetro do método __init__ é uma forma de dizer “Se ninguém informar um valor, use este por padrão.”
+# evita erros e permite criar objetos mesmo sem passar todos os argumentos.
         self.numero = numero
         self.capacidade = capacidade
         self.ocupada = ocupada
