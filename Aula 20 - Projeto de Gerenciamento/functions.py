@@ -1,109 +1,113 @@
-# Definição das classes dos objetos do sistema de gerenciamento do restaurante conforme o modelo ERD(desenho)
-
-from datetime import datetime # Importa datetime para manipulação de datas e horas no pedido
-from typing import List, Optional # Importa List e Optional para tipagem de listas e valores opcionais (sugestão IA)
-
-class Produto:
-     def __init__(self, id, nome: str, categoria: str, valor: float):
-        self.id = id
-        self.nome = nome
-        self.valor = valor
-        self.categoria = categoria 
-
-class Item: 
-    def __init__(self, id_item: int, id_produto: int, quantidade: int, id_pedido: int):
-        self.id_item = id_item
-        self.id_produto = id_produto
-        self.quantidade = quantidade
-        self.id_pedido = id_pedido
-   
-class Pedido: 
-    def __init__(self, id: int, id_atendente: int, id_mesa: int):
-        self.id = id
-        self.id_atendente = id_atendente
-        self.id_mesa = id_mesa
-        self.itens = []  # Lista para armazenar os itens do pedido
-        self.data_pedido = datetime.now()
-        self.itens: List[Item] = []
-        self.status = "Aberto", "Fechado", "Cancelado" # Aberto, Fechado, Cancelado
-
-class Pedido(Produto): # Herda de Produto id, nome, valor e categoria
-     def __init__(self, id: int, produto, quantidade, valor_unitario):
-        super().__init__(produto.id, produto.nome, produto.valor, produto.categoria) # Chama o construtor da classe Produto
-        # abaixo define os atributos específicos da classe Pedido
-        self.id = id 
-        self.quantidade = quantidade
-        self.valor_unitario = valor_unitario.valor # aqui o .valor se refere ao atributo valor da classe Produto
-
-class Atendente:
-    def __init__(self, id: int, nome: str):
-        self.id = id
-        self.nome = nome
-        self.ativo = True
-
-class Mesa:
-    def __init__(self, numero: int, capacidade: int):
-        self.numero = numero
-        self.capacidade = capacidade
-        self.ocupada = False # false indica que a mesa está desocupada
-        self.id_pedido_atual: Optional[int] = None # ID do pedido atual associado à mesa, None se não houver pedido
-
 # Funções para manipulação dos dados no banco de dados SQLite para o Sistema de Gerenciamntento do Restaurante
+from bd import criar_conexao
+from class import *
+from datetime import datetime
 
 def cadastrar_produto(id, nome, valor, categoria): #cria função para cadastrar ID, Nome e Valor do produto
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-        # Insere o produto, nome e valor na tabela
-    cursor.execute("INSERT INTO produtos (id: AUTO_INCREMENT, nome, valor, categoria) VALUES (?, ?, ?, ?)", (id, nome, valor, categoria)) 
+    conexao = criar_conexao()
+    if not conexao:
+        return False
+    cursor = conexao.cursor()
+    cursor.execute("INSERT INTO produtos (id: INTEGER PRIMARY KEY AUTOINCREMENT, nome, valor, categoria) VALUES (?, ?, ?, ?)", (id, nome, valor, categoria)) 
     conexao.commit() # Salva as alterações no banco de dados
     print(f"Produto '{nome}' cadastrado com sucesso!")
     return True
+conexao.close()
 
 def buscar_produto(nome): #cria função para buscar produto pelo nome
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
+    conexao = criar_conexao()
+    if not conexao:
+        return []
     cursor.execute("SELECT * FROM produtos WHERE nome = ?", (nome,)) # Busca o produto pelo nome na tabela
-    resultado = cursor.fetchall() # Obtém todos os resultados da consulta
-    return resultado # Retorna os resultados encontrados
+    resultado = cursor.fetchone() # Obtém todos os resultados da consulta
+    if resultado:
+            produto = Produto(resultado[0], resultado[1], resultado[2], resultado[3])
+            return produto
+    return produto
+conexao.close()
 
 def listar_produtos(): #cria função para listar todos os produtos
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("SELECT * FROM produtos") # Seleciona todos os produtos da tabela
-    resultados = cursor.fetchall() # Obtém todos os resultados da consulta
-    return resultados # Retorna a lista de produtos encontrados
+    conexao = criar_conexao()
+    if not conexao:
+        return []
+    cursor = conexao.cursor()
+    cursor.execute("SELECT * FROM produtos")
+    resultados = cursor.fetchall()
+    produtos = []
+    for resultado in resultados:
+        produto = Produto(resultado[0], resultado[1], resultado[2], resultado[3])
+        produtos.append(produto)
+        return produtos
+conexao.close()
 
-def remover_produto(id): #cria função para remover produto pelo ID
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("DELETE FROM produtos WHERE id = ?", (id,)) # Remove o produto pelo ID na tabela
-    conexao.commit() # Salva as alterações no banco de dados
-    print(f"Produto com ID '{id}' removido com sucesso!")
-    return True
+def remover_produto(id_produto): # Remove um produto pelo ID
+    conexao = criar_conexao()
+    if not conexao:
+        return False
+    try:
+        cursor = conexao.cursor()
+        cursor.execute("DELETE FROM produtos WHERE id = ?", (id_produto,))
+        
+        if cursor.rowcount > 0:
+            conexao.commit()
+            print("✅ Produto removido com sucesso!")
+            return True
+        else:
+            print("🚫 Produto não encontrado!")
+            return False
+    except Exception as erro:
+        print(f"🚫 Erro ao remover produto: {erro}")
+    return False
+conexao.close()
 
 def realizar_pedido(id_atendente, id_mesa, itens: list): #cria função para realizar pedido com id_atendente, id_mesa e itens do pedido 
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
+    from datetime import datetime
+    conexao = criar_conexao()
+    if not conexao:
+        return [] # Cria um cursor para executar comandos SQL
     cursor.execute("INSERT INTO pedidos (id_atendente, id_mesa, data_pedido, status) VALUES (?, ?, ?, ?)", 
                    (id_atendente, id_mesa, datetime.now(), "Aberto")) # Insere o pedido na tabela
     id_pedido = cursor.lastrowid # Obtém o ID do pedido recém-criado
     for item in itens: # Para cada item no pedido
-        cursor.execute("INSERT INTO itens (id_pedido: AUTO_INCREMENT, id_produto, quantidade) VALUES (?, ?, ?)", 
+        cursor.execute("INSERT INTO itens (id_pedido: INTEGER PRIMARY KEY AUTOINCREMENT, id_produto, quantidade) VALUES (?, ?, ?)", 
                        (id_pedido, item.id_produto, item.quantidade)) # Insere o item na tabela
-    conexao.commit() # Salva as alterações no banco de dados
+    conection.commit() # Salva as alterações no banco de dados
     print(f"🚀 Pedido realizado com sucesso! ID do Pedido: {id_pedido}")
     return id_pedido
 
-def atualizar_produto(nome, novo_nome, novo_valor): #cria função para atualizar produto pelo nome
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("UPDATE produtos SET nome = ?, valor = ? WHERE nome = ?", (novo_nome, novo_valor, nome)) # Atualiza o produto pelo nome na tabela
-    conexao.commit() # Salva as alterações no banco de dados
-    print(f"Produto '{nome}' atualizado com sucesso para '{novo_nome}' com valor '{novo_valor}'!")
-    return True
+def atualizar_produto(id_produto, novo_nome=None, nova_categoria=None, novo_valor=None): # Atualiza um produto existente
+    conexao = criar_conexao()
+    if not conexao:
+        return False
+    try:
+        cursor = conexao.cursor()
+        # Buscar produto atual
+        cursor.execute("SELECT * FROM produtos WHERE id = ?", (id_produto,))
+        produto_atual = cursor.fetchone()
+        if not produto_atual:
+            print("🚫 Produto não encontrado!")
+            return False
+        # Usar valores atuais se novos valores não foram fornecidos
+        nome = novo_nome if novo_nome else produto_atual[1]
+        categoria = nova_categoria if nova_categoria else produto_atual[2]
+        valor = novo_valor if novo_valor else produto_atual[3]
+        cursor.execute(
+            "UPDATE produtos SET nome = ?, categoria = ?, valor = ? WHERE id = ?",
+            (nome, categoria, valor, id_produto)
+        )
+        conexao.commit()
+        print("✅ Produto atualizado com sucesso!")
+        return True
+    except Exception as erro:
+        print(f"🚫 Erro ao atualizar produto: {erro}")
+        return False
+    finally:
+        conexao.close()
 
-def listar_itens_pedido(conexao, id_pedido): #cria função para listar itens do pedido pelo id_pedido
-    cursor = conexao.cursor()
+def listar_itens_pedido(id_pedido): #cria função para listar itens do pedido pelo id_pedido
+    conexao = criar_conexao()
+    if not conexao:
+        return []
     cursor.execute("""
         SELECT 
             i.id_item,
@@ -129,41 +133,190 @@ def calcular_subtotal(self, valor_unitario: float) -> float: # o -> float indica
 def __str__(self): # sugestão IA
     return f"Produto(id={self.id}, nome='{self.nome}', valor=R${self.valor:.2f})"
 
-def cadastrar_atendente(id, nome): #cria função para cadastrar atendente pelo id e nome
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("INSERT INTO atendentes (id, nome, ativo) VALUES (?, ?, ?)", (id, nome, True)) # Insere o atendente na tabela]
-    # define True como padrão para saber se o atendente está ativo no restaurante
-    conexao.commit() # Salva as alterações no banco de dados
-    print(f"Atendente '{nome}' cadastrado com sucesso!")
-    return True
+def cadastrar_atendente(nome): #cria função para cadastrar atendente pelo id e nome
+    conexao = criar_conexao()
+    if not conexao:
+        return False
+    try:
+        conexao = criar_conexao()
+        cursor.execute("INSERT INTO atendentes (nome) VALUES (?)", (nome,))
+        conexao.commit()
+        print(f"✅ Atendente '{nome}' cadastrado com sucesso!")
+        return True
+    except Exception as erro:
+        print(f"🚫 Erro ao cadastrar atendente: {erro}")
+        return False
+    finally:
+        conexao.close()
 
-def listar_atendentes(): #cria função para listar todos os atendentes
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("SELECT * FROM atendentes") # Seleciona todos os atendentes da tabela
-    resultados = cursor.fetchall() # Obtém todos os resultados da consulta
-    return resultados # Retorna a lista de atendentes encontrados
+def listar_atendentes(): # Lista todos os atendentes
+    conexao = criar_conexao()
+    if not conexao:
+        return []
+    try:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT * FROM atendentes")
+        resultados = cursor.fetchall()
+        atendentes = []
+        for resultado in resultados:
+            atendente = Atendente(resultado[0], resultado[1], bool(resultado[2]))
+            atendentes.append(atendente)
+        return atendentes
+    except Exception as erro:
+        print(f"🚫 Erro ao listar atendentes: {erro}")
+        return []
+    finally:
+        conexao.close()
 
-def abrir_mesa(numero, capacidade): #cria função para abrir mesa pelo número e capacidade
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("INSERT INTO mesas (numero, capacidade, ocupada) VALUES (?, ?, ?)", (numero, capacidade, False)) # Insere a mesa na tabela indicando numero, capacidade e ocupação
-    # define False como padrão para saber se a mesa está ocupada no restaurante
-    conexao.commit() # Salva as alterações no banco de dados
-    if True:
-        print(f"Mesa '{numero}' com capacidade para {capacidade} pessoas aberta com sucesso!")
-    else: 
-        print(f"🚫 Erro ao abrir a mesa '{numero}'.")
-    # Retorna True após abrir a mesa com sucesso
-    return True
+def cadastrar_mesa(numero, capacidade): # Cadastra uma nova mesa
+    conexao = criar_conexao()
+    if not conexao:
+        return False
+    try:
+        cursor = conexao.cursor()
+        cursor.execute(
+            "INSERT INTO mesas (numero, capacidade) VALUES (?, ?)",
+            (numero, capacidade)
+        )
+        conexao.commit()
+        print(f"✅ Mesa {numero} cadastrada com sucesso!")
+        return True
+    except Exception as erro:
+        print(f"🚫 Erro ao cadastrar mesa: {erro}")
+        return False
+    finally:
+        conexao.close()
+
+# def abrir_mesa(numero, capacidade): #cria função para abrir mesa pelo número e capacidade
+#     cursor = conection.cursor() # Cria um cursor para executar comandos SQL
+#     cursor.execute("INSERT INTO mesas (numero, capacidade, ocupada) VALUES (?, ?, ?)", (numero, capacidade, False)) # Insere a mesa na tabela indicando numero, capacidade e ocupação
+#     # define False como padrão para saber se a mesa está ocupada no restaurante
+#     conection.commit() # Salva as alterações no banco de dados
+#     if True:
+#         print(f"Mesa '{numero}' com capacidade para {capacidade} pessoas aberta com sucesso!")
+#     else: 
+#         print(f"🚫 Erro ao abrir a mesa '{numero}'.")
+#     # Retorna True após abrir a mesa com sucesso
+#     return True
 
 def listar_mesas(): #cria função para listar todas as mesas
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor() # Cria um cursor para executar comandos SQL
-    cursor.execute("SELECT * FROM mesas") # Seleciona todas as mesas da tabela
-    resultados = cursor.fetchall() # Obtém todos os resultados da consulta
-    return resultados # Retorna a lista de mesas encontrados
+    conexao = criar_conexao()
+    if not conexao:
+        return []
+    try:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT * FROM mesas")
+        resultados = cursor.fetchall()
+        mesas = []
+        for resultado in resultados:
+            mesa = Mesa(resultado[0], resultado[1], bool(resultado[2]))
+            mesas.append(mesa)
+        return mesas
+    except Exception as erro:
+        print(f"🚫 Erro ao listar mesas: {erro}")
+        return []
+    finally:
+        conexao.close()
+
+def realizar_pedido(numero_mesa, id_atendente, lista_itens):
+    """
+    Realiza um novo pedido
+    lista_itens deve ser uma lista de dicionários: [{'nome_produto': 'Pizza', 'quantidade': 2}, ...]
+    """
+    conexao = criar_conexao()
+    if not conexao:
+        return False
+    
+    try:
+        cursor = conexao.cursor()
+        
+        # Criar o pedido
+        cursor.execute(
+            "INSERT INTO pedidos (numero_mesa, id_atendente) VALUES (?, ?)",
+            (numero_mesa, id_atendente)
+        )
+        id_pedido = cursor.lastrowid
+        
+        valor_total = 0.0
+        
+        # Adicionar itens ao pedido
+        for item_data in lista_itens:
+            nome_produto = item_data['nome_produto']
+            quantidade = item_data['quantidade']
+            
+            # Buscar produto
+            cursor.execute("SELECT * FROM produtos WHERE nome = ?", (nome_produto,))
+            produto = cursor.fetchone()
+            
+            if not produto:
+                print(f"🚫 Produto '{nome_produto}' não encontrado!")
+                continue
+            
+            valor_unitario = produto[3]  # valor do produto
+            subtotal = quantidade * valor_unitario
+            valor_total += subtotal
+            
+            # Inserir item do pedido
+            cursor.execute(
+                "INSERT INTO itens_pedido (id_pedido, id_produto, quantidade, valor_unitario) VALUES (?, ?, ?, ?)",
+                (id_pedido, produto[0], quantidade, valor_unitario)
+            )
+        
+        # Atualizar valor total do pedido
+        cursor.execute(
+            "UPDATE pedidos SET valor_total = ? WHERE id = ?",
+            (valor_total, id_pedido)
+        )
+        
+        # Marcar mesa como ocupada
+        cursor.execute(
+            "UPDATE mesas SET ocupada = 1, id_pedido_atual = ? WHERE numero = ?",
+            (id_pedido, numero_mesa)
+        )
+        
+        conexao.commit()
+        print(f"✅ Pedido {id_pedido} realizado com sucesso! Total: R\$ {valor_total:.2f}")
+        return id_pedido
+        
+    except Exception as erro:
+        print(f"🚫 Erro ao realizar pedido: {erro}")
+        return False
+    finally:
+        conexao.close()
+
+def listar_itens_pedido(id_pedido):
+    """Lista todos os itens de um pedido"""
+    conexao = criar_conexao()
+    if not conexao:
+        return []
+    
+    try:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT ip.quantidade, p.nome, p.categoria, ip.valor_unitario
+            FROM itens_pedido ip
+            JOIN produtos p ON ip.id_produto = p.id
+            WHERE ip.id_pedido = ?
+        """, (id_pedido,))
+        
+        resultados = cursor.fetchall()
+        itens = []
+        
+        for resultado in resultados:
+            item = ItemPedido(
+                id_produto=0,  # Não precisamos do ID aqui
+                nome_produto=resultado[1],
+                quantidade=resultado[0],
+                valor_unitario=resultado[3]
+            )
+            itens.append(item)
+        
+        return itens
+    except Exception as erro:
+        print(f"🚫 Erro ao listar itens do pedido: {erro}")
+        return []
+    finally:
+        conexao.close()
 
 def fechar_mesa(numero): # Fecha o pedido associado à mesa 'numero' e libera a mesa. 
 # Fluxo:
@@ -173,8 +326,9 @@ def fechar_mesa(numero): # Fecha o pedido associado à mesa 'numero' e libera a 
 # - libera a mesa (ocupada = False, id_pedido_atual = NULL)
 # - commit ou rollback em caso de erro
 # Retorna True quando concluído com sucesso, False caso ocorra algum problema.
-    from bd import conexao
-    cursor = conexao.cursor()
+    conexao = criar_conexao()
+    if not conexao:
+        return []
     try:
         # 1) Busca informações da mesa e do pedido associado
         cursor.execute("""
@@ -235,8 +389,9 @@ def fechar_mesa(numero): # Fecha o pedido associado à mesa 'numero' e libera a 
 def calcular_total_pedido() -> float:
     # Calcula o valor total de todos os pedidos realizados no dia atual
     from datetime import datetime # Importa datetime para manipulação de datas 
-    from bd import conexao # Importa a conexão do banco de dados
-    cursor = conexao.cursor()
+    conexao = criar_conexao()
+    if not conexao:
+        return []
     hoje = datetime.now().date()  # define a variável hoje com a data atual , descondiderando a hora
     cursor.execute("""
         SELECT SUM(i.quantidade * p.valor) AS total_dia
@@ -250,10 +405,11 @@ def calcular_total_pedido() -> float:
     print(f"💰 Total de vendas de {hoje}: R${total_dia:.2f}") 
     return total_dia
 
-def gerar_relatorio_vendas():
+def relatorio_vendas():
     # Gera um relatório simples de vendas do dia atual, incluindo total de pedidos e valor total vendido
-    from bd import conexao
-    cursor = conexao.cursor()
+    conexao = criar_conexao()
+    if not conexao:
+        return []
     from datetime import datetime # Importa datetime para manipulação de datas 
     hoje = datetime.now().date()
     # Total de pedidos e valor total vendido
@@ -282,8 +438,10 @@ def relatorio_vendas_detalhado():
 # - Total de pedidos
 # - Total vendido
 # - Produtos mais vendidos (quantidade e valor)
-    from bd import conexao
-    cursor = conexao.cursor()
+    conexao = criar_conexao()
+    if not conexao:
+        return []
+    from datetime import datetime # Importa datetime para manipulação de datas 
     hoje = datetime.now().date()
  # Total de pedidos e valor total vendido
     cursor.execute("""
